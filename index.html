@@ -7,37 +7,24 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Spellbook" />
-  <title>Spellbook — Cast Custom Spells</title>
+  <title>Spellbook — Draw to Cast</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-theme="nebula">
   <div id="stars" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-rune">✶</span>
-      <h1>Spellbook</h1>
-    </div>
-    <div class="topbar-actions">
-      <button id="btn-grid" class="icon-btn" title="Tidy spells into a grid" aria-label="Tidy grid">▦</button>
-      <button id="btn-import" class="icon-btn" title="Import spells" aria-label="Import">⬇</button>
-      <button id="btn-export" class="icon-btn" title="Export spells" aria-label="Export">⬆</button>
-      <button id="btn-new" class="primary-btn">✦ New Spell</button>
-    </div>
+  <!-- The whiteboard you draw spells on -->
+  <canvas id="board" class="board"></canvas>
+
+  <header class="hud">
+    <div class="brand"><span class="brand-rune">✶</span><span>Spellbook</span></div>
+    <button id="btn-settings" class="gear-btn" aria-label="Settings">⚙</button>
   </header>
 
-  <main id="whiteboard" class="whiteboard">
-    <div id="canvas" class="canvas"></div>
-    <div id="empty-state" class="empty-state hidden">
-      <div class="empty-glyph">🪄</div>
-      <h2>Your grimoire is empty</h2>
-      <p>Conjure your first spell. A spell is a name bound to a sequence of
-         actions — like a Shortcut. Cast it to make things happen on your iPhone.</p>
-      <button class="primary-btn" data-action="new-empty">✦ Write your first spell</button>
-    </div>
-  </main>
+  <div id="hint" class="hint">Draw a spell to cast it ✦</div>
+  <div id="cast-flash" class="cast-flash" aria-hidden="true"></div>
 
   <!-- Casting console -->
   <aside id="console" class="console hidden" aria-live="polite">
@@ -48,7 +35,43 @@
     <ol id="console-log" class="console-log"></ol>
   </aside>
 
-  <!-- Spell editor modal -->
+  <!-- Settings sheet -->
+  <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <div class="editor-head">
+        <h2>Settings</h2>
+        <button id="settings-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="sheet-body">
+        <section class="settings-section">
+          <h3>Whiteboard look</h3>
+          <div class="field"><span>Theme</span><div id="theme-swatches" class="theme-swatches"></div></div>
+          <div class="field"><span>Ink color</span><div id="ink-swatches" class="color-swatches"></div></div>
+          <label class="toggle-row"><span>Glow trail</span><input id="toggle-glow" type="checkbox" /></label>
+          <label class="toggle-row"><span>Show grid</span><input id="toggle-grid" type="checkbox" /></label>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-head">
+            <h3>Your spells</h3>
+            <button id="btn-new-spell" class="primary-btn">✦ New spell</button>
+          </div>
+          <ul id="spell-list" class="spell-list"></ul>
+          <p id="spell-list-empty" class="muted-line">No spells yet. Tap “New spell” and draw one.</p>
+        </section>
+
+        <section class="settings-section">
+          <h3>Backup</h3>
+          <div class="row-buttons">
+            <button id="btn-import" class="ghost-btn">⬇ Import</button>
+            <button id="btn-export" class="ghost-btn">⬆ Export</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spell editor (with gesture recorder) -->
   <div id="editor-overlay" class="overlay hidden" role="dialog" aria-modal="true">
     <div class="editor">
       <div class="editor-head">
@@ -57,19 +80,28 @@
       </div>
 
       <div class="editor-body">
+        <div class="field">
+          <span>Draw your spell <small>this shape will cast it later</small></span>
+          <div class="recorder">
+            <canvas id="record-canvas" class="record-canvas" width="320" height="220"></canvas>
+            <div id="record-hint" class="record-hint">✍️ Draw a shape here</div>
+            <button id="record-clear" class="recorder-clear">Redraw</button>
+          </div>
+        </div>
+
         <div class="field-row">
           <label class="field glyph-field">
             <span>Glyph</span>
-            <input id="spell-glyph" type="text" maxlength="2" value="✨" inputmode="text" />
+            <input id="spell-glyph" type="text" maxlength="2" value="✨" />
           </label>
           <label class="field grow">
             <span>Spell name</span>
-            <input id="spell-name" type="text" placeholder="e.g. Summon Coffee Order" />
+            <input id="spell-name" type="text" placeholder="e.g. Summon Coffee" />
           </label>
         </div>
 
         <label class="field">
-          <span>Incantation <small>(optional flavour text)</small></span>
+          <span>Incantation <small>(optional)</small></span>
           <input id="spell-incantation" type="text" placeholder="e.g. Caffeina, awaken!" />
         </label>
 
@@ -80,7 +112,7 @@
 
         <div class="steps-section">
           <div class="steps-head">
-            <span>Actions <small>cast top to bottom</small></span>
+            <span>Actions <small>run top to bottom</small></span>
             <button id="add-step" class="ghost-btn">＋ Add action</button>
           </div>
           <ol id="steps-list" class="steps-list"></ol>
@@ -91,13 +123,13 @@
       <div class="editor-foot">
         <button id="spell-delete" class="danger-btn">Delete</button>
         <div class="spacer"></div>
-        <button id="spell-test" class="ghost-btn">▶ Test cast</button>
-        <button id="spell-save" class="primary-btn">Save spell</button>
+        <button id="spell-test" class="ghost-btn">▶ Test</button>
+        <button id="spell-save" class="primary-btn">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Action picker sheet -->
+  <!-- Action picker -->
   <div id="picker-overlay" class="overlay hidden" role="dialog" aria-modal="true">
     <div class="picker">
       <div class="editor-head">
@@ -113,6 +145,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="js/store.js"></script>
+  <script src="js/recognizer.js"></script>
   <script src="js/actions.js"></script>
   <script src="js/app.js"></script>
 </body>

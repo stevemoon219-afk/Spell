@@ -1,75 +1,81 @@
-# 🪄 Spellbook — a whiteboard for custom spells
+# 🪄 Spellbook — draw to cast
 
-Spellbook is a mobile-first web app where you write **custom spells** — named
-incantations bound to a sequence of actions, just like Shortcuts on iPhone.
-Drop spells onto a magical whiteboard, arrange them, and **cast** them with a tap.
+Spellbook is a mobile-first web app where the whole screen is a **whiteboard you
+draw on**. Each spell is bound to a **drawn shape (a glyph/gesture)** — trace
+that shape anywhere on the board and the spell **casts**, running a sequence of
+actions just like an iPhone Shortcut.
+
+No buttons to tap to cast — you literally draw the spell.
+
+## How it works
+
+- **Cast:** draw a spell's shape on the whiteboard. Spellbook recognises the
+  closest match (it's tolerant of size, position and a bit of rotation) and runs
+  it. A drawn shape needs to be reasonably close to the sample you recorded.
+- **Create:** open **⚙ Settings → ✦ New spell**, draw a sample shape in the
+  recorder, name it, pick a colour, and add actions. (You can draw in multiple
+  strokes — e.g. a star.)
+- **Customise the board:** Settings lets you change the **theme**, **ink
+  colour**, **glow trail**, and **grid**.
 
 A spell can do real things on your iPhone two ways:
 
-- **🔮 Apple Shortcuts bridge** — a spell can run any Shortcut by name (passing
-  text input), or open any `x-callback-url` / app deep link. This is the
-  legitimate way a web app triggers native iOS automation, so a spell can
-  effectively do *anything* you can build in the Shortcuts app.
+- **🔮 Apple Shortcuts bridge** — run any Shortcut by name (passing text input),
+  or open any `x-callback-url` / app deep link. ⚠️ The Shortcut must already
+  exist in your Shortcuts app with that **exact name**, or iOS shows
+  *"The file doesn't exist / Could not find the shortcut."*
 - **🌐 Built-in web actions** — open URLs/app links, call, text (SMS), email,
-  FaceTime, Maps, web search, copy to clipboard, speak aloud, notify, vibrate,
-  share sheet, and wait/delay.
+  FaceTime, Maps, web search, copy, speak aloud, notify, vibrate, share, wait.
 
-Each spell can mix both kinds of actions, run top-to-bottom.
+Each spell can mix both kinds, run top-to-bottom.
 
 ## Run it
 
-It's a static site — no build step, no server code.
+It's a static site — no build step.
 
 ```bash
-# from the repo root, start any static server, e.g.:
 python3 -m http.server 8000
-# then open http://localhost:8000 on your computer,
-# or http://<your-computer-ip>:8000 on your iPhone (same Wi-Fi)
+# open http://localhost:8000 on a computer, or use GitHub Pages on your phone
 ```
 
-For real use, host the folder anywhere static (GitHub Pages, Netlify, etc.) and
-open it in **Safari on your iPhone**. Then **Share → Add to Home Screen** to
-install it like a native app (custom schemes such as `shortcuts://`, `tel:`,
-`sms:`, and `maps://` only hand off to apps on the device itself).
+For real use, open it in **Safari on your iPhone** and **Share → Add to Home
+Screen**. Custom schemes (`shortcuts://`, `tel:`, `sms:`, `maps://`) only hand
+off to apps when the page is opened *on the device itself*.
 
-## Using it
+> **Note on iOS prompts:** when a spell opens another app, iOS shows a security
+> confirmation ("Open in …?"). This is enforced by the operating system and
+> cannot be disabled by any website; adding the app to your Home Screen makes it
+> less intrusive.
 
-1. Tap **✦ New Spell**.
-2. Give it a name, a glyph (emoji), an optional incantation, and a colour.
-3. Tap **＋ Add action** and pick from the Shortcuts bridge or web actions.
-4. Fill in each action's fields. Reorder with ↑ / ↓.
-5. **▶ Test cast** while editing, or **Save** and tap **✦ Cast** on the card.
-6. Drag cards anywhere; **▦** tidies them into a grid.
+### Starter spells (included on first run)
 
-Spells are stored locally in your browser. Use **⬆ Export** / **⬇ Import** to
-back them up or move them between devices (a `spellbook.json` file).
+These use only web actions, so they work with zero setup — just trace the shape:
 
-### Example spells (included on first run)
-
-- **Coffee Run** → opens Maps searching for coffee.
-- **I'm Driving** → runs a "Driving Focus" Shortcut, then speaks a confirmation.
-- **SOS Text Home** → opens Messages with "On my way home now."
-
-## Tips for the Shortcuts bridge
-
-- The **Shortcut name must match exactly** what's in your Shortcuts app.
-- To pass data in, fill the *Text input* field; in your Shortcut, read it with
-  **Shortcut Input**.
-- Want a spell to file a reminder, toggle a smart light, or post to an app?
-  Build that flow once in Shortcuts, then point a spell's **Run a Shortcut**
-  action at it.
+- **◯ Circle** → Coffee Run (opens Maps for coffee)
+- **△ Triangle** → Reveal Knowledge (web search)
+- **Z** → Speak, Spirit (speaks "The spell is cast.")
 
 ## Project layout
 
 ```
-index.html              # markup + app shell
-css/styles.css          # magical dark theme
-js/store.js             # localStorage persistence + seed spells
+index.html              # markup + app shell (full-screen drawing board)
+css/styles.css          # themes, HUD, settings sheet, editor, recorder
+js/store.js             # localStorage persistence, appearance, seed spells
+js/recognizer.js        # $1 Unistroke gesture recognizer
 js/actions.js           # action registry + the casting engine
-js/app.js               # whiteboard UI: render, drag, edit, cast, import/export
+js/app.js               # drawing, recognition, casting, settings, editor
 manifest.webmanifest    # PWA / Add-to-Home-Screen metadata
 icons/                  # generated app icons (+ generator script)
 ```
+
+## Tips
+
+- **Draw shapes that are distinct** from each other — a circle vs a triangle vs a
+  Z are easy to tell apart; two similar squiggles may get confused.
+- If a cast doesn't trigger, a toast tells you the closest spell — redraw a
+  little closer to your original sample, or re-record the sample in the editor.
+- Re-record a spell's shape anytime: Settings → ✎ on the spell → draw again →
+  Save.
 
 ## Extending it with new actions
 
@@ -85,5 +91,5 @@ my_action: {
 }
 ```
 
-The editor builds its form from `fields` automatically, and the action shows
-up in the picker under its category.
+The editor builds the form from `fields` automatically and the action appears in
+the picker under its category.
