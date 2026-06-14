@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Spellbook" />
+  <title>Spellbook — Cast Custom Spells</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="stars" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-rune">✶</span>
+      <h1>Spellbook</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-grid" class="icon-btn" title="Tidy spells into a grid" aria-label="Tidy grid">▦</button>
+      <button id="btn-import" class="icon-btn" title="Import spells" aria-label="Import">⬇</button>
+      <button id="btn-export" class="icon-btn" title="Export spells" aria-label="Export">⬆</button>
+      <button id="btn-new" class="primary-btn">✦ New Spell</button>
+    </div>
+  </header>
+
+  <main id="whiteboard" class="whiteboard">
+    <div id="canvas" class="canvas"></div>
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-glyph">🪄</div>
+      <h2>Your grimoire is empty</h2>
+      <p>Conjure your first spell. A spell is a name bound to a sequence of
+         actions — like a Shortcut. Cast it to make things happen on your iPhone.</p>
+      <button class="primary-btn" data-action="new-empty">✦ Write your first spell</button>
+    </div>
+  </main>
+
+  <!-- Casting console -->
+  <aside id="console" class="console hidden" aria-live="polite">
+    <div class="console-head">
+      <span class="console-title">Casting…</span>
+      <button id="console-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <ol id="console-log" class="console-log"></ol>
+  </aside>
+
+  <!-- Spell editor modal -->
+  <div id="editor-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="editor">
+      <div class="editor-head">
+        <h2 id="editor-title">New Spell</h2>
+        <button id="editor-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+
+      <div class="editor-body">
+        <div class="field-row">
+          <label class="field glyph-field">
+            <span>Glyph</span>
+            <input id="spell-glyph" type="text" maxlength="2" value="✨" inputmode="text" />
+          </label>
+          <label class="field grow">
+            <span>Spell name</span>
+            <input id="spell-name" type="text" placeholder="e.g. Summon Coffee Order" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Incantation <small>(optional flavour text)</small></span>
+          <input id="spell-incantation" type="text" placeholder="e.g. Caffeina, awaken!" />
+        </label>
+
+        <div class="field">
+          <span>Spell color</span>
+          <div id="color-swatches" class="color-swatches"></div>
+        </div>
+
+        <div class="steps-section">
+          <div class="steps-head">
+            <span>Actions <small>cast top to bottom</small></span>
+            <button id="add-step" class="ghost-btn">＋ Add action</button>
+          </div>
+          <ol id="steps-list" class="steps-list"></ol>
+          <p id="steps-empty" class="steps-empty">No actions yet. Add one to make this spell do something.</p>
+        </div>
+      </div>
+
+      <div class="editor-foot">
+        <button id="spell-delete" class="danger-btn">Delete</button>
+        <div class="spacer"></div>
+        <button id="spell-test" class="ghost-btn">▶ Test cast</button>
+        <button id="spell-save" class="primary-btn">Save spell</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action picker sheet -->
+  <div id="picker-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="picker">
+      <div class="editor-head">
+        <h2>Add an action</h2>
+        <button id="picker-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <input id="picker-search" class="picker-search" type="search" placeholder="Search actions…" />
+      <div id="picker-list" class="picker-list"></div>
+    </div>
+  </div>
+
+  <input id="file-input" type="file" accept="application/json,.json" hidden />
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/actions.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
